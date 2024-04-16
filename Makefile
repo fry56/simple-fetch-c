@@ -8,6 +8,8 @@
 SRC = \
 	src/fetch.c \
 	src/parse_http_response.c \
+	src/utils.c \
+	src/free_response.c \
 
 OBJ = $(SRC:.c=.o)
 

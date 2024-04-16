@@ -8,7 +8,7 @@
 #include <response.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+#include <ctype.h>
 
 static char *get_next_line(char **response)
 {
@@ -22,7 +22,8 @@ static char *get_next_line(char **response)
     return start;
 }
 
-static response_t *init_response() {
+static response_t *init_response(void)
+{
     response_t *res = calloc(1, sizeof(response_t));
 
     if (!res)
@@ -31,14 +32,40 @@ static response_t *init_response() {
     return res;
 }
 
-static bool parse_status_line(char **response, response_t *res) {
-    char *line = get_next_line(response);
-
-    return sscanf(line, "HTTP/%*s %d %[^\r\n]",
-        &res->status_code, res->status_message) == 2;
+static bool check_status_line(response_t *res, char *reason_phrase,
+    int status_code)
+{
+    if (!reason_phrase)
+        return false;
+    res->status_code = status_code;
+    res->status_message = reason_phrase;
+    return true;
 }
 
-static void parse_headers(char **response, response_t *res) {
+static bool parse_status_line(char **response, response_t *res)
+{
+    char *line = get_next_line(response);
+    char *token;
+    int status_code;
+    char *reason_phrase;
+
+    if (!line || strncmp(line, "HTTP/", 5) != 0)
+        return false;
+    token = strchr(line, ' ');
+    if (!token)
+        return false;
+    token++;
+    status_code = atoi(token);
+    if (status_code == 0)
+        return false;
+    while (*token && isdigit(*token)) token++;
+    while (*token && isspace(*token)) token++;
+    reason_phrase = strdup(token);
+    return check_status_line(res, reason_phrase, status_code);
+}
+
+static void parse_headers(char **response, response_t *res)
+{
     char *line;
     char *colon;
 
@@ -49,23 +76,6 @@ static void parse_headers(char **response, response_t *res) {
         *colon = '\0';
         map_add(res->headers, line, colon + 2);
     }
-}
-
-void free_response(response_t *response) {
-    if (!response)
-        return;
-    if (response->status_message)
-        free(response->status_message);
-    if (response->headers) {
-        for (map_node_t *node = response->headers->head; node; node = node->next) {
-            free(node->key);
-            free(node->value);
-        }
-        free(response->headers);
-    }
-    if (response->body)
-        free(response->body);
-    free(response);
 }
 
 response_t *parse_http_response(char *response)

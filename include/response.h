@@ -8,9 +8,10 @@
 #pragma once
 
 #include <map.h>
+#include <status_code.h>
 
 typedef struct response_s {
-    int status_code;
+    status_code_t status_code;
     char *status_message;
     map_t *headers;
     char *body;
