@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 
 static char *get_next_line(char **response)
 {
@@ -74,7 +75,7 @@ static void parse_headers(char **response, response_t *res)
         if (!colon)
             continue;
         *colon = '\0';
-        map_add(res->headers, line, colon + 2);
+        map_add(res->headers, strdup(line), strdup(colon + 2));
     }
 }
 
@@ -88,7 +89,7 @@ response_t *parse_http_response(char *response)
     if (!parsed_response)
         return NULL;
     if (!parse_status_line(&response, parsed_response)) {
-        free_response(parsed_response);
+        response_free(parsed_response);
         return NULL;
     }
     parse_headers(&response, parsed_response);

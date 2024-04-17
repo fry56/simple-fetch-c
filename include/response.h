@@ -18,4 +18,4 @@ typedef struct response_s {
 } response_t;
 
 response_t *parse_http_response(char *response);
-void free_response(response_t *response);
+void response_free(response_t *response);

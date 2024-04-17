@@ -7,7 +7,7 @@
 
 #include <response.h>
 
-void free_response(response_t *response)
+void response_free(response_t *response)
 {
     if (!response)
         return;
